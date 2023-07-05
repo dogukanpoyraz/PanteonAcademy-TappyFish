@@ -11,6 +11,9 @@ public class Fish : MonoBehaviour
     int angle;
     int maxAngle = 20;
     int minAngle = -60;
+    public Score score;
+    bool touchedGround;
+    public GameManager gameManager;
 
     // Start is called before the first frame update
     void Start()
@@ -25,14 +28,17 @@ public class Fish : MonoBehaviour
     void Update()
     {
         FishSwim();
-        FishRotation();
-
+        
     }
 
+    private void FixedUpdate()
+    {
+        FishRotation();
+    }
 
     void FishSwim()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && GameManager.gameOver == false)
         {
             _rb.velocity = Vector2.zero;
             _rb.velocity = new Vector2(_rb.velocity.x, _speed);
@@ -49,7 +55,7 @@ public class Fish : MonoBehaviour
             }
         }
 
-        if (_rb.velocity.y < -1.2)
+        else if (_rb.velocity.y < -1.2)
         {
             if (angle > minAngle)
             {
@@ -57,7 +63,46 @@ public class Fish : MonoBehaviour
             }
         }
 
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        if (touchedGround == false)
+        {
+            transform.rotation = Quaternion.Euler(0, 0, angle);
+        }
+
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Obstacle"))
+        {
+            //Debug.Log("Scored!..");
+            score.Scored();
+        }
+        else if (collision.CompareTag("Column"))
+        {
+            //game over
+            gameManager.GameOver();
+        }
+    }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            if (GameManager.gameOver == false)
+            {
+                //game over
+                gameManager.GameOver();
+                GameOver();
+            }
+            else
+            {
+                //game over (fish)
+            }
+        }
+    }
+
+    void GameOver()
+    {
+        touchedGround = true;
+        transform.rotation = Quaternion.Euler(0, 0, -90);
+    }
 }
