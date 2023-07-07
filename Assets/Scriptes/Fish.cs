@@ -14,21 +14,26 @@ public class Fish : MonoBehaviour
     public Score score;
     bool touchedGround;
     public GameManager gameManager;
+    public Sprite fishDied;
+    SpriteRenderer sp;
+    Animator anim;
+    public ObstacleSpawner obstaclespawner;
+    [SerializeField] private AudioSource swim, hit, point;
 
     // Start is called before the first frame update
     void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
+        _rb.gravityScale = 0;
         // _rb.gravityScale = 1;
-
-
+        sp = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
     }
 
     // Update is called once per frame
     void Update()
     {
         FishSwim();
-        
     }
 
     private void FixedUpdate()
@@ -40,8 +45,21 @@ public class Fish : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0) && GameManager.gameOver == false)
         {
-            _rb.velocity = Vector2.zero;
-            _rb.velocity = new Vector2(_rb.velocity.x, _speed);
+            swim.Play();
+            if (GameManager.gameStarted == false)
+            {
+                _rb.gravityScale = 4f;
+                _rb.velocity = Vector2.zero;
+                _rb.velocity = new Vector2(_rb.velocity.x, _speed);
+                obstaclespawner.InstantiateObstacle();
+                gameManager.GameHasStated();
+            }
+            else
+            {
+                _rb.velocity = Vector2.zero;
+                _rb.velocity = new Vector2(_rb.velocity.x, _speed);
+            }
+
         }
     }
 
@@ -76,13 +94,21 @@ public class Fish : MonoBehaviour
         {
             //Debug.Log("Scored!..");
             score.Scored();
+            point.Play();
         }
-        else if (collision.CompareTag("Column"))
+        else if (collision.CompareTag("Column") && GameManager.gameOver == false)
         {
             //game over
+            FishDieEffect();
             gameManager.GameOver();
         }
     }
+
+    void FishDieEffect()
+    {
+        hit.Play();
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -90,12 +116,14 @@ public class Fish : MonoBehaviour
             if (GameManager.gameOver == false)
             {
                 //game over
+                FishDieEffect();
                 gameManager.GameOver();
                 GameOver();
             }
             else
             {
                 //game over (fish)
+                GameOver();
             }
         }
     }
@@ -104,5 +132,7 @@ public class Fish : MonoBehaviour
     {
         touchedGround = true;
         transform.rotation = Quaternion.Euler(0, 0, -90);
+        sp.sprite = fishDied;
+        anim.enabled = false;
     }
 }
